@@ -7,6 +7,11 @@ var assert = require('assert'),
 
 var root = path.join(__dirname, 'fixtures', 'root');
 
+// because of https://techsparx.com/nodejs/howto/vows-weird-trick.html
+process.on('uncaughtException', function (err) {
+  console.log('Caught exception: ' + err.stack);
+});
+
 vows.describe('http-server').addBatch({
   'When http-server is listening on 8080': {
     topic: function () {
@@ -159,17 +164,67 @@ vows.describe('http-server').addBatch({
     topic: function () {
       var server = httpServer.createServer({
         root: root,
-        conneg: true,
-        corsHeaders: 'X-Test'
+        conneg: true
       });
-      server.listen(8082);
+      server.listen(8083);
       this.callback(null, server);
     },
     'and ask for turtle': {
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8082/',
+          uri: 'http://127.0.0.1:8083/test',
+          headers: {
+            Accept: 'text/turtle',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      }
+    },
+    'and ask for ntriples': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8083/test',
+          headers: {
+            Accept: 'application/n-triples',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      }
+    },
+    'and ask for rdf/xml': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8083/test',
+          headers: {
+            Accept: 'application/rdf-xml',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 404': function (err, res) {
+        assert.equal(res.statusCode, 404);
+      }
+    },
+    'and ask for nothing in particular': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8083/test',
           headers: {
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
@@ -179,6 +234,17 @@ vows.describe('http-server').addBatch({
       },
       'status code should be 200': function (err, res) {
         assert.equal(res.statusCode, 200);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'test.ttl'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should match content of the turtle file': function (err, file, body) {
+          assert.equal(body.trim(), file.trim());
+        }
       }
     }
   }
