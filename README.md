@@ -84,7 +84,7 @@ For example, when you do a request to `http://localhost:8080/test` with Accept h
 the server looks for the file `/test.ttl`. 
 When you do a request to `http://localhost:8080/test` with Accept header `application/n-triples`, 
 the server looks for the file `/test.nt`.
-Accept headers with multiple types, optionally weighted a the quality value are also supported.
+Accept headers with multiple types, optionally weighted with a quality value, are also supported.
 For example, when you do a request to `http://localhost:8080/test` with Accept header `text/turtle;q=0.5, application/n-triples`, 
 the server looks for the file `/test.nt`.
 
