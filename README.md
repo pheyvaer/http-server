@@ -67,12 +67,26 @@ Using `npx` you can run the script without installing it first:
 
 `-r` or `--robots` Provide a /robots.txt (whose content defaults to `User-agent: *\nDisallow: /`)
 
+`--conneg` Enable content negotiation.
+
 `-h` or `--help` Print this list and exit.
 
 ## Magic Files
 
 - `index.html` will be served as the default file to any directory requests.
 - `404.html` will be served if a file is not found. This can be used for Single-Page App (SPA) hosting to serve the entry page.
+
+## Content Negotiation
+
+The server looks for the correct file depending on the MIME Types in the accept header.
+MIME Types are linked to their corresponding extensions.
+For example, when you do a request to `http://localhost:8080/test` with Accept header `text/turtle`, 
+the server looks for the file `/test.ttl`. 
+When you do a request to `http://localhost:8080/test` with Accept header `application/n-triples`, 
+the server looks for the file `/test.nt`.
+Accept headers with multiple types, optionally weighted a the quality value are also supported.
+For example, when you do a request to `http://localhost:8080/test` with Accept header `text/turtle;q=0.5, application/n-triples`, 
+the server looks for the file `/test.nt`.
 
 # Development
 
