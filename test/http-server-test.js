@@ -154,5 +154,32 @@ vows.describe('http-server').addBatch({
         assert.ok(res.headers['access-control-allow-headers'].split(/\s*,\s*/g).indexOf('X-Test') >= 0, 204);
       }
     }
+  },
+  'When conneg is enabled': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        conneg: true,
+        corsHeaders: 'X-Test'
+      });
+      server.listen(8082);
+      this.callback(null, server);
+    },
+    'and ask for turtle': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8082/',
+          headers: {
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      }
+    }
   }
 }).export(module);
