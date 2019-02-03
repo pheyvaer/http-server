@@ -209,7 +209,7 @@ vows.describe('http-server').addBatch({
           method: 'GET',
           uri: 'http://127.0.0.1:8083/test',
           headers: {
-            Accept: 'application/rdf-xml',
+            Accept: 'application/rdf+xml',
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
             'Access-Control-Request-Headers': 'Foobar'
@@ -245,6 +245,22 @@ vows.describe('http-server').addBatch({
         'should match content of the turtle file': function (err, file, body) {
           assert.equal(body.trim(), file.trim());
         }
+      }
+    },'and ask for unexisting MIME type': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8083/test',
+          headers: {
+            Accept: 'asdfadf__dfdkennvd+++++',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 404': function (err, res) {
+        assert.equal(res.statusCode, 404);
       }
     }
   }
