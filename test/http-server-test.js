@@ -238,11 +238,11 @@ vows.describe('http-server').addBatch({
       'and file content': {
         topic: function (res, body) {
           var self = this;
-          fs.readFile(path.join(root, 'test.ttl'), 'utf8', function (err, data) {
+          fs.readFile(path.join(root, 'test.nt'), 'utf8', function (err, data) {
             self.callback(err, data, body);
           });
         },
-        'should match content of the turtle file': function (err, file, body) {
+        'should match content of the n-triples file': function (err, file, body) {
           assert.equal(body.trim(), file.trim());
         }
       }
