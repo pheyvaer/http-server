@@ -262,6 +262,22 @@ vows.describe('http-server').addBatch({
       'status code should be 404': function (err, res) {
         assert.equal(res.statusCode, 404);
       }
+    },'and ask for unexisting folder': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8083/test3/',
+          headers: {
+            Accept: 'text/turtle',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 404': function (err, res) {
+        assert.equal(res.statusCode, 404);
+      }
     }
   }
 }).export(module);
