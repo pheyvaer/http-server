@@ -279,5 +279,44 @@ vows.describe('http-server').addBatch({
         assert.equal(res.statusCode, 404);
       }
     }
+  },
+  'When conneg and trailing is enabled': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        conneg: true,
+        trailing: true
+      });
+      server.listen(8084);
+      this.callback(null, server);
+    },
+    'and trailing slash adding enabled': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8084/test2',
+          headers: {
+            Accept: 'text/turtle',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'test2/index.html'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should match content of the HTML file': function (err, file, body) {
+          assert.equal(body.trim(), file.trim());
+        }
+      }
+    }
   }
 }).export(module);
