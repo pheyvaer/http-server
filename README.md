@@ -69,7 +69,7 @@ Using `npx` you can run the script without installing it first:
 
 `--conneg` Enable content negotiation.
 
-`-- trailing` Add trailing slash when content negotiation is enabled.
+`--trailing` Add trailing slash when content negotiation is enabled.
 
 `-h` or `--help` Print this list and exit.
 
