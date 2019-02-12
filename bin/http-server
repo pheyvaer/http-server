@@ -41,7 +41,7 @@ if (argv.h || argv.help) {
     '  -r --robots  Respond to /robots.txt [User-agent: *\\nDisallow: /]',
     '  --no-dotfiles  Do not show dotfiles',
     '  --conneg     Enable content negotiation.',
-    '  -t --trailing  Add trailing slash when using content negotiation.',
+    '  --trailing  Add trailing slash when using content negotiation.',
     '  -h --help    Print this list and exit.'
   ].join('\n'));
   process.exit();
@@ -106,7 +106,8 @@ function listen(port) {
     logFn: logger.request,
     proxy: proxy,
     showDotfiles: argv.dotfiles,
-    conneg: argv.conneg
+    conneg: argv.conneg,
+    trailing: argv.trailing
   };
 
   if (argv.cors) {
