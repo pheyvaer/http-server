@@ -71,6 +71,7 @@
     "corser": "~2.0.0",
     "ecstatic": "^3.0.0",
     "http-proxy": "^1.8.1",
+    "mime-db": "^1.38.0",
     "mime-types": "pheyvaer/mime-types",
     "opener": "~1.4.0",
     "optimist": "0.6.x",
