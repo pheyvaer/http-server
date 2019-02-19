@@ -280,7 +280,7 @@ vows.describe('http-server').addBatch({
       }
     }
   },
-  'When conneg and trailing is enabled': {
+  'When conneg and trailing slash adding enabled': {
     topic: function () {
       var server = httpServer.createServer({
         root: root,
@@ -290,13 +290,50 @@ vows.describe('http-server').addBatch({
       server.listen(8084);
       this.callback(null, server);
     },
-    'and trailing slash adding enabled': {
+    'and ask for directory without slash': {
       topic: function () {
         request({
           method: 'GET',
           uri: 'http://127.0.0.1:8084/test2',
           headers: {
             Accept: 'text/turtle',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'test2/index.ttl'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should match content of the Turtle file': function (err, file, body) {
+          assert.equal(body.trim(), file.trim());
+        }
+      }
+    }
+  },
+  'When trailing is enabled': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        trailing: true
+      });
+      server.listen(8085);
+      this.callback(null, server);
+    },
+    'and ask for directory without slash': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8084/test2',
+          headers: {
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
             'Access-Control-Request-Headers': 'Foobar'
