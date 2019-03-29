@@ -1,4 +1,4 @@
-FROM node:8
+FROM node:11
 
 LABEL maintainer='Giovanni Mels <giovanni.mels@continuum.be>'
 
