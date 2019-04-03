@@ -89,12 +89,13 @@ the server looks for the file `/test.nt`.
 Accept headers with multiple types, optionally weighted with a quality value, are also supported.
 For example, when you do a request to `http://localhost:8080/test` with Accept header `text/turtle;q=0.5, application/n-triples`, 
 the server looks for the file `/test.nt`.
+When content negotiation is enabled, the server will set the Vary response header accordingly (`Vary: Accept`).
 
 ## Automatic Addition of Trailing Slashes
 
 Trailing slashes are not added by default, i.e., `/test` does not become `/test/`.
 In case you want this behaviour you can enable it via `--trailing`.
-However, when combing this with content negotation this also means that, for example, 
+However, when combing this with content negotiation this also means that, for example, 
 when you do a request to `http://localhost:8080/test` with Accept header `text/turtle`, 
 the server looks for the file `/test/index.ttl`. 
 
