@@ -189,7 +189,7 @@ vows.describe('http-server').addBatch({
         assert.ok(res.headers['content-type'].startsWith('text/turtle'));
       },
       'and vary header should be present and contain accept': function (err, res) {
-        assert.ok(res.headers['vary'].split(/\s*,\s/g).indexOf('Accept') >= 0);
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
       }
     },
     'and ask for ntriples': {
@@ -209,7 +209,7 @@ vows.describe('http-server').addBatch({
         assert.equal(res.statusCode, 200);
       },
       'vary header should be present and contain accept': function (err, res) {
-        assert.ok(res.headers['vary'].split(/\s*,\s/g).indexOf('Accept') >= 0);
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
       }
     },
     'and ask for rdf/xml': {
@@ -245,7 +245,7 @@ vows.describe('http-server').addBatch({
         assert.equal(res.statusCode, 200);
       },
       'and vary header should be present and contain accept': function (err, res) {
-        assert.ok(res.headers['vary'].split(/\s*,\s/g).indexOf('Accept') >= 0);
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
       },
       'and file content': {
         topic: function (res, body) {
@@ -369,7 +369,7 @@ vows.describe('http-server').addBatch({
     }
   },
   'When gzip is enabled': {
-     topic: function () {
+    topic: function () {
       var server = httpServer.createServer({
         root: root,
         gzip: true
@@ -397,8 +397,8 @@ vows.describe('http-server').addBatch({
         assert.equal(res.headers['content-encoding'], 'gzip');
       },
       'and vary header is set and contains Accept-Encoding': function (err, res) {
-        assert.ok(res.headers['vary'].split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
-      } 
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
+      }
     },
     'and ask for no particular content encoding': {
       topic: function () {
@@ -419,8 +419,8 @@ vows.describe('http-server').addBatch({
         assert.ok(!res.headers['content-encoding']);
       },
       'and vary header is set and contains Accept-Encoding': function (err, res) {
-        assert.ok(res.headers['vary'].split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
-      } 
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
+      }
     }
   }
 }).export(module);
