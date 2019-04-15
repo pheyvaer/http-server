@@ -184,6 +184,12 @@ vows.describe('http-server').addBatch({
       },
       'status code should be 200': function (err, res) {
         assert.equal(res.statusCode, 200);
+      },
+      'and content type should be turtle': function (err, res) {
+        assert.ok(res.headers['content-type'].startsWith('text/turtle'));
+      },
+      'and vary header should be present and contain accept': function (err, res) {
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
       }
     },
     'and ask for ntriples': {
@@ -201,6 +207,9 @@ vows.describe('http-server').addBatch({
       },
       'status code should be 200': function (err, res) {
         assert.equal(res.statusCode, 200);
+      },
+      'vary header should be present and contain accept': function (err, res) {
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
       }
     },
     'and ask for rdf/xml': {
@@ -234,6 +243,9 @@ vows.describe('http-server').addBatch({
       },
       'status code should be 200': function (err, res) {
         assert.equal(res.statusCode, 200);
+      },
+      'and vary header should be present and contain accept': function (err, res) {
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
       },
       'and file content': {
         topic: function (res, body) {
@@ -332,7 +344,7 @@ vows.describe('http-server').addBatch({
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8084/test2',
+          uri: 'http://127.0.0.1:8085/test2',
           headers: {
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
@@ -353,6 +365,61 @@ vows.describe('http-server').addBatch({
         'should match content of the HTML file': function (err, file, body) {
           assert.equal(body.trim(), file.trim());
         }
+      }
+    }
+  },
+  'When gzip is enabled': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        gzip: true
+      });
+      server.listen(8086);
+      this.callback(null, server);
+    },
+    'and ask for gzip content encoding': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8086/test.ttl',
+          headers: {
+            'Accept-Encoding': 'gzip',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      },
+      'and content is gzipped': function (err, res) {
+        assert.equal(res.headers['content-encoding'], 'gzip');
+      },
+      'and vary header is set and contains Accept-Encoding': function (err, res) {
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
+      }
+    },
+    'and ask for no particular content encoding': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8086/test.ttl',
+          headers: {
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      },
+      'and content is not gzipped': function (err, res) {
+        assert.ok(!res.headers['content-encoding']);
+      },
+      'and vary header is set and contains Accept-Encoding': function (err, res) {
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
       }
     }
   }
