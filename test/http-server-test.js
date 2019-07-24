@@ -1,16 +1,14 @@
 var assert = require('assert'),
-    path = require('path'),
-    fs = require('fs'),
-    vows = require('vows'),
-    request = require('request'),
-    httpServer = require('../lib/http-server');
+  path = require('path'),
+  fs = require('fs'),
+  vows = require('vows'),
+  request = require('request'),
+  httpServer = require('../lib/http-server');
+
+// Prevent vows from swallowing errors
+process.on('uncaughtException', console.error);
 
 var root = path.join(__dirname, 'fixtures', 'root');
-
-// because of https://techsparx.com/nodejs/howto/vows-weird-trick.html
-process.on('uncaughtException', function (err) {
-  console.log('Caught exception: ' + err.stack);
-});
 
 vows.describe('http-server').addBatch({
   'When http-server is listening on 8080': {
@@ -160,20 +158,205 @@ vows.describe('http-server').addBatch({
       }
     }
   },
+  'When gzip and brotli compression is enabled and a compressed file is available': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        brotli: true,
+        gzip: true
+      });
+      server.listen(8084);
+      this.callback(null, server);
+    },
+    'and a request accepting only gzip is made': {
+      topic: function () {
+        request({
+          uri: 'http://127.0.0.1:8084/compression/',
+          headers: {
+            'accept-encoding': 'gzip'
+          }
+        }, this.callback);
+      },
+      'response should be gzip compressed': function (err, res, body) {
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.headers['content-encoding'], 'gzip');
+      }
+    },
+    'and a request accepting only brotli is made': {
+      topic: function () {
+        request({
+          uri: 'http://127.0.0.1:8084/compression/',
+          headers: {
+            'accept-encoding': 'br'
+          }
+        }, this.callback);
+      },
+      'response should be brotli compressed': function (err, res, body) {
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.headers['content-encoding'], 'br');
+      }
+    },
+    'and a request accepting both brotli and gzip is made': {
+      topic: function () {
+        request({
+          uri: 'http://127.0.0.1:8084/compression/',
+          headers: {
+            'accept-encoding': 'gzip, br'
+          }
+        }, this.callback);
+      },
+      'response should be brotli compressed': function (err, res, body) {
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.headers['content-encoding'], 'br');
+      }
+    }
+  },
+  'When http-server is listening on 8083 with username "good_username" and password "good_password"': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        robots: true,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': 'true'
+        },
+        username: 'good_username',
+        password: 'good_password'
+      });
+
+      server.listen(8083);
+      this.callback(null, server);
+    },
+    'and the user requests an existent file with no auth details': {
+      topic: function () {
+        request('http://127.0.0.1:8083/file', this.callback);
+      },
+      'status code should be 401': function (res) {
+        assert.equal(res.statusCode, 401);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'file'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should be a forbidden message': function (err, file, body) {
+          assert.equal(body, 'Access denied');
+        }
+      }
+    },
+    'and the user requests an existent file with incorrect username': {
+      topic: function () {
+        request('http://127.0.0.1:8083/file', {
+          auth: {
+            user: 'wrong_username',
+            pass: 'good_password'
+          }
+        }, this.callback);
+      },
+      'status code should be 401': function (res) {
+        assert.equal(res.statusCode, 401);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'file'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should be a forbidden message': function (err, file, body) {
+          assert.equal(body, 'Access denied');
+        }
+      }
+    },
+    'and the user requests an existent file with incorrect password': {
+      topic: function () {
+        request('http://127.0.0.1:8083/file', {
+          auth: {
+            user: 'good_username',
+            pass: 'wrong_password'
+          }
+        }, this.callback);
+      },
+      'status code should be 401': function (res) {
+        assert.equal(res.statusCode, 401);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'file'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should be a forbidden message': function (err, file, body) {
+          assert.equal(body, 'Access denied');
+        }
+      }
+    },
+    'and the user requests a non-existent file with incorrect password': {
+      topic: function () {
+        request('http://127.0.0.1:8083/404', {
+          auth: {
+            user: 'good_username',
+            pass: 'wrong_password'
+          }
+        }, this.callback);
+      },
+      'status code should be 401': function (res) {
+        assert.equal(res.statusCode, 401);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'file'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should be a forbidden message': function (err, file, body) {
+          assert.equal(body, 'Access denied');
+        }
+      }
+    },
+    'and the user requests an existent file with correct auth details': {
+      topic: function () {
+        request('http://127.0.0.1:8083/file', {
+          auth: {
+            user: 'good_username',
+            pass: 'good_password'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (res) {
+        assert.equal(res.statusCode, 200);
+      },
+      'and file content': {
+        topic: function (res, body) {
+          var self = this;
+          fs.readFile(path.join(root, 'file'), 'utf8', function (err, data) {
+            self.callback(err, data, body);
+          });
+        },
+        'should match content of served file': function (err, file, body) {
+          assert.equal(body.trim(), file.trim());
+        }
+      }
+    }
+  },
   'When conneg is enabled': {
     topic: function () {
       var server = httpServer.createServer({
         root: root,
         conneg: true
       });
-      server.listen(8083);
+      server.listen(8085);
       this.callback(null, server);
     },
     'and ask for turtle': {
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8083/test',
+          uri: 'http://127.0.0.1:8085/test',
           headers: {
             Accept: 'text/turtle',
             'Access-Control-Request-Method': 'GET',
@@ -196,7 +379,7 @@ vows.describe('http-server').addBatch({
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8083/test',
+          uri: 'http://127.0.0.1:8085/test',
           headers: {
             Accept: 'application/n-triples',
             'Access-Control-Request-Method': 'GET',
@@ -216,7 +399,7 @@ vows.describe('http-server').addBatch({
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8083/test',
+          uri: 'http://127.0.0.1:8085/test',
           headers: {
             Accept: 'application/rdf+xml',
             'Access-Control-Request-Method': 'GET',
@@ -233,7 +416,7 @@ vows.describe('http-server').addBatch({
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8083/test',
+          uri: 'http://127.0.0.1:8085/test',
           headers: {
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
@@ -262,7 +445,7 @@ vows.describe('http-server').addBatch({
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8083/test',
+          uri: 'http://127.0.0.1:8085/test',
           headers: {
             Accept: 'asdfadf__dfdkennvd+++++',
             'Access-Control-Request-Method': 'GET',
@@ -278,7 +461,7 @@ vows.describe('http-server').addBatch({
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8083/test3/',
+          uri: 'http://127.0.0.1:8085/test3/',
           headers: {
             Accept: 'text/turtle',
             'Access-Control-Request-Method': 'GET',
@@ -299,14 +482,14 @@ vows.describe('http-server').addBatch({
         conneg: true,
         trailing: true
       });
-      server.listen(8084);
+      server.listen(8086);
       this.callback(null, server);
     },
     'and ask for directory without slash': {
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8084/test2',
+          uri: 'http://127.0.0.1:8086/test2',
           headers: {
             Accept: 'text/turtle',
             'Access-Control-Request-Method': 'GET',
@@ -337,14 +520,14 @@ vows.describe('http-server').addBatch({
         root: root,
         trailing: true
       });
-      server.listen(8085);
+      server.listen(8086);
       this.callback(null, server);
     },
     'and ask for directory without slash': {
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8085/test2',
+          uri: 'http://127.0.0.1:8086/test2',
           headers: {
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
@@ -365,61 +548,6 @@ vows.describe('http-server').addBatch({
         'should match content of the HTML file': function (err, file, body) {
           assert.equal(body.trim(), file.trim());
         }
-      }
-    }
-  },
-  'When gzip is enabled': {
-    topic: function () {
-      var server = httpServer.createServer({
-        root: root,
-        gzip: true
-      });
-      server.listen(8086);
-      this.callback(null, server);
-    },
-    'and ask for gzip content encoding': {
-      topic: function () {
-        request({
-          method: 'GET',
-          uri: 'http://127.0.0.1:8086/test.ttl',
-          headers: {
-            'Accept-Encoding': 'gzip',
-            'Access-Control-Request-Method': 'GET',
-            Origin: 'http://example.com',
-            'Access-Control-Request-Headers': 'Foobar'
-          }
-        }, this.callback);
-      },
-      'status code should be 200': function (err, res) {
-        assert.equal(res.statusCode, 200);
-      },
-      'and content is gzipped': function (err, res) {
-        assert.equal(res.headers['content-encoding'], 'gzip');
-      },
-      'and vary header is set and contains Accept-Encoding': function (err, res) {
-        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
-      }
-    },
-    'and ask for no particular content encoding': {
-      topic: function () {
-        request({
-          method: 'GET',
-          uri: 'http://127.0.0.1:8086/test.ttl',
-          headers: {
-            'Access-Control-Request-Method': 'GET',
-            Origin: 'http://example.com',
-            'Access-Control-Request-Headers': 'Foobar'
-          }
-        }, this.callback);
-      },
-      'status code should be 200': function (err, res) {
-        assert.equal(res.statusCode, 200);
-      },
-      'and content is not gzipped': function (err, res) {
-        assert.ok(!res.headers['content-encoding']);
-      },
-      'and vary header is set and contains Accept-Encoding': function (err, res) {
-        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept-Encoding') >= 0);
       }
     }
   }
