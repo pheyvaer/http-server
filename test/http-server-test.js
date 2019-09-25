@@ -514,20 +514,67 @@ vows.describe('http-server').addBatch({
       }
     }
   },
+  'When conneg is enabled and add file at runtime': {
+    topic: function () {
+      var server = httpServer.createServer({
+        root: root,
+        conneg: true
+      });
+      server.listen(8088);
+      this.callback(null, server);
+    },
+    'and ask for nquads': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8088/test',
+          headers: {
+            Accept: 'application/n-quads',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 404': function (err, res) {
+        assert.equal(res.statusCode, 404);
+      },
+      'and add nquads file': {
+        topic: function () {
+          fs.writeFileSync(path.join(root, 'test.nq'), '');
+          console.log('File written');
+          request({
+            method: 'GET',
+            uri: 'http://127.0.0.1:8088/test',
+            headers: {
+              Accept: 'application/n-quads',
+              'Access-Control-Request-Method': 'GET',
+              Origin: 'http://example.com',
+              'Access-Control-Request-Headers': 'Foobar'
+            }
+          }, this.callback);
+        },
+        'status code should be 200': function (err, res) {
+          fs.unlinkSync(path.join(root, 'test.nq'));
+          assert.equal(res.statusCode, 200);
+        }
+      }
+    }
+  },
   'When trailing is enabled': {
     topic: function () {
       var server = httpServer.createServer({
         root: root,
         trailing: true
       });
-      server.listen(8086);
+      server.listen(8087);
       this.callback(null, server);
     },
     'and ask for directory without slash': {
       topic: function () {
         request({
           method: 'GET',
-          uri: 'http://127.0.0.1:8086/test2',
+          uri: 'http://127.0.0.1:8087/test2',
           headers: {
             'Access-Control-Request-Method': 'GET',
             Origin: 'http://example.com',
