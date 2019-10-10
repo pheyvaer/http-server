@@ -352,6 +352,29 @@ vows.describe('http-server').addBatch({
       server.listen(8085);
       this.callback(null, server);
     },
+    'and request has a long accept header': {
+      topic: function () {
+        request({
+          method: 'GET',
+          uri: 'http://127.0.0.1:8085/test',
+          headers: {
+            Accept: 'application/trig,application/ld+json;q=0.9,application/n-quads;q=0.7,text/turtle;q=0.6,application/rdf+xml;q=0.5,application/xml;q=0.5,text/xml;q=0.5,image/svg+xml;q=0.5,application/json;q=0.45,application/n-triples;q=0.3,text/html;q=0.2,application/xhtml+xml;q=0.18,text/n3;q=0.1',
+            'Access-Control-Request-Method': 'GET',
+            Origin: 'http://example.com',
+            'Access-Control-Request-Headers': 'Foobar'
+          }
+        }, this.callback);
+      },
+      'status code should be 200': function (err, res) {
+        assert.equal(res.statusCode, 200);
+      },
+      'and content type should be turtle': function (err, res) {
+        assert.ok(res.headers['content-type'].indexOf('text/turtle') !== -1);
+      },
+      'and vary header should be present and contain accept': function (err, res) {
+        assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
+      }
+    },
     'and ask for turtle': {
       topic: function () {
         request({
@@ -369,7 +392,7 @@ vows.describe('http-server').addBatch({
         assert.equal(res.statusCode, 200);
       },
       'and content type should be turtle': function (err, res) {
-        assert.ok(res.headers['content-type'].startsWith('text/turtle'));
+        assert.ok(res.headers['content-type'].indexOf('text/turtle') !== -1);
       },
       'and vary header should be present and contain accept': function (err, res) {
         assert.ok(res.headers.vary.split(/\s*,\s/g).indexOf('Accept') >= 0);
