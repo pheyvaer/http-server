@@ -2,3 +2,4 @@ node_modules/*
 npm-debug.log
 .idea
 .dir-locals.el
+.DS_Store
