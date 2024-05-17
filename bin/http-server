@@ -52,6 +52,7 @@ if (argv.h || argv.help) {
     '  --no-dotfiles  Do not show dotfiles',
     '  --conneg     Enable content negotiation.',
     '  --trailing  Enable automatic addition of trailing slashes.',
+    '  --indexFile  Filename (without extension) for the default index file [index]',
     '  -h --help    Print this list and exit.'
   ].join('\n'));
   process.exit();
@@ -122,6 +123,7 @@ function listen(port) {
     showDotfiles: argv.dotfiles,
     conneg: argv.conneg,
     trailing: argv.trailing,
+    indexFile: argv.indexFile,
     username: argv.username || process.env.NODE_HTTP_SERVER_USERNAME,
     password: argv.password || process.env.NODE_HTTP_SERVER_PASSWORD
   };
